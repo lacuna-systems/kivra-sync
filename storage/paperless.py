@@ -121,6 +121,9 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
                         return storage_path['id']
             else:
                 logging.warning(f"Failed to look up storage path '{name}': {response.status_code}, Response: {response.text}")
+                if response.status_code == 403:
+                    logging.error("The paperless-ngx API user lacks permission to view storage paths. Grant it "
+                                  "'Storage paths: View' and 'Add' under Settings > Users & Groups")
 
             # Create new storage path if not found, filing documents in a directory named after it
             directory = name.replace('/', '-').replace('{', '').replace('}', '').strip()
@@ -137,6 +140,9 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
                 return storage_path_id
 
             logging.error(f"Failed to create storage path '{name}': {response.status_code}, Response: {response.text}")
+            if response.status_code == 403:
+                logging.error("The paperless-ngx API user lacks permission to add storage paths. Grant it "
+                              "'Storage paths: Add' under Settings > Users & Groups")
         except Exception as e:
             logging.error(f"Error getting storage path '{name}': {str(e)}")
 
@@ -170,6 +176,9 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
             logging.info(f"Updated storage path of document {document['id']} to {response.json().get('storage_path')}")
         else:
             logging.error(f"Failed to update storage path of document {document['id']}: {response.status_code}, Response: {response.text}")
+            if response.status_code == 403:
+                logging.error("The paperless-ngx API user lacks permission to change documents. Grant it "
+                              "'Documents: Change' under Settings > Users & Groups")
     
     def _get_correspondent_id(self, sender_name):
         """
