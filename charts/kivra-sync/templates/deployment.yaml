@@ -46,7 +46,9 @@ spec:
           {{- end }}
           # Secrets are passed as environment variables and expanded into the arguments by Kubernetes
           args:
+            {{- if include "kivra-sync.hasSsn" . }}
             - $(KIVRA_SSN)
+            {{- end }}
             - {{ printf "--interaction-provider=%v" .Values.interaction.provider | quote }}
             {{- if include "kivra-sync.isWeb" . }}
             - --web-host=0.0.0.0
@@ -85,11 +87,13 @@ spec:
             - {{ . | quote }}
             {{- end }}
           env:
+            {{- if include "kivra-sync.hasSsn" . }}
             - name: KIVRA_SSN
               valueFrom:
                 secretKeyRef:
                   name: {{ include "kivra-sync.secretName" . }}
                   key: ssn
+            {{- end }}
             {{- if eq .Values.storage.provider "paperless" }}
             - name: PAPERLESS_TOKEN
               valueFrom:

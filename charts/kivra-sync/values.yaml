@@ -8,13 +8,19 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-# Personal identity number (YYYYMMDDXXXX). Required unless existingSecret is set.
+# Personal identity number (YYYYMMDDXXXX). Required with the ntfy interaction
+# provider. Optional with the web provider: left empty, the web interface asks
+# for it at the start of each sync, so it is never stored in the cluster.
 ssn: ""
 
 # Name of an existing Secret to read the sensitive values from instead of the
-# ones in this file. Expected keys: "ssn", plus "paperless-token" when using the
-# paperless storage provider and "ntfy-password" when interaction.ntfy.user is set.
+# ones in this file. Expected keys: "ssn" (see existingSecretHasSsn), plus
+# "paperless-token" when using the paperless storage provider and
+# "ntfy-password" when interaction.ntfy.user is set.
 existingSecret: ""
+# Whether existingSecret has an "ssn" key. Set to false with the web provider to
+# enter the personal identity number in the web interface instead.
+existingSecretHasSsn: true
 
 interaction:
   # web or ntfy. The local provider is not supported since it shows the
