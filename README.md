@@ -128,6 +128,20 @@ python kivra_sync.py YYYYMMDDXXXX --storage-provider paperless \
   --paperless-tags "kivra,receipts,automated"
 ```
 
+##### Required Paperless-ngx Permissions
+
+The user that owns the API token needs the following permissions (Settings > Users & Groups in Paperless-ngx):
+
+| Object | Permissions | Used for |
+|--------|-------------|----------|
+| Documents | View, Add, Change | Checking whether a document is already synced, uploading documents, and moving already synced business documents to their storage path |
+| Correspondents | View, Add | Looking up or creating the sender/store as correspondent |
+| Document types | View, Add | Looking up or creating the `Receipt` and `Letter` document types |
+| Tags | View, Add | Looking up or creating the tags given with `--paperless-tags` |
+| Storage paths | View, Add | Looking up or creating the storage path named after each business account (only needed with `--include-business` or `--business-only`) |
+
+The user must also be able to see the existing documents, correspondents, document types, tags and storage paths (as owner or through object permissions); otherwise already synced documents may be uploaded again and duplicate objects may be created. If a permission is missing, the API returns 403 and kivra-sync logs which permission to grant; for storage paths, business documents then end up in the Default storage path.
+
 ### Interaction Providers
 
 Interaction providers handle user interaction during authentication and report completion statistics.
