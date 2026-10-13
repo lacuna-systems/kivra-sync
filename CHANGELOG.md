@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/lacuna-systems/kivra-sync/compare/v1.6.0...v1.6.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* Assign storage path to already synced Paperless documents and add debug logging ([#7](https://github.com/lacuna-systems/kivra-sync/issues/7)) ([c5a28ea](https://github.com/lacuna-systems/kivra-sync/commit/c5a28ea5fee060c79e9fa67a2f3002612e673649))
+
 # [1.6.0](https://github.com/lacuna-systems/kivra-sync/compare/v1.5.0...v1.6.0) (2026-10-13)
 
 
