@@ -202,7 +202,7 @@ python kivra_sync.py YYYYMMDDXXXX --include-business
 python kivra_sync.py YYYYMMDDXXXX --business-only --business-accounts "My Company AB"
 ```
 
-With filesystem storage, business documents are stored under `<base-dir>/<ssn>/Business/<name>_<key>/Letters/`. With Paperless-ngx, business documents also get the business account's name as a tag.
+With filesystem storage, business documents are stored under `<base-dir>/<ssn>/Business/<name>_<key>/Letters/`. With Paperless-ngx, business documents are assigned a storage path named after the company (created as `<company>/{created_year}/{title}` if it doesn't exist).
 
 ## Command-Line Reference
 

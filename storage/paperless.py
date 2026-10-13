@@ -11,7 +11,7 @@ from storage.base import DocumentStoreProvider
 class PaperlessNgxStoreProvider(DocumentStoreProvider):
     """Storage provider that stores documents in paperless-ngx."""
     
-    def __init__(self, api_url, api_token, tags=None, dry_run=False):
+    def __init__(self, api_url, api_token, tags=None, storage_path=None, dry_run=False):
         """
         Initialize with paperless-ngx API details.
         
@@ -19,6 +19,7 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
             api_url (str): Base URL for the paperless-ngx API (e.g., 'http://localhost:8000/api')
             api_token (str): API token for authentication
             tags (list, optional): List of tag names to apply to all documents
+            storage_path (str, optional): Name of the storage path to assign to all documents
             dry_run (bool, optional): If True, don't actually store documents, just simulate
         """
         self.api_url = api_url.rstrip('/')
@@ -35,6 +36,9 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
         
         # Get tag IDs if tags are provided
         self.tag_ids = self._get_tag_ids(self.tags) if self.tags else []
+        
+        # Get storage path ID if a storage path is provided
+        self.storage_path_id = self._get_storage_path_id(storage_path) if storage_path else None
     
     def _get_tag_ids(self, tag_names):
         """
@@ -84,6 +88,47 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
         
         logging.info(f"Using tag IDs: {tag_ids}")
         return tag_ids
+    
+    def _get_storage_path_id(self, name):
+        """
+        Get storage path ID for the given name, creating one if it doesn't exist.
+        
+        Args:
+            name (str): Name of the storage path
+            
+        Returns:
+            int: Storage path ID, or None if it could not be found or created
+        """
+        logging.info(f"Looking for storage path: {name}")
+        
+        # Check if storage path exists - use case-insensitive exact match
+        response = self.session.get(
+            f"{self.api_url}/storage_paths/",
+            params={'name__iexact': name}
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data['count'] > 0:
+                storage_path_id = data['results'][0]['id']
+                logging.info(f"Found existing storage path '{name}' with ID {storage_path_id}")
+                return storage_path_id
+        
+        # Create new storage path if not found, filing documents in a directory named after it
+        directory = name.replace('/', '-').replace('{', '').replace('}', '').strip()
+        response = self.session.post(
+            f"{self.api_url}/storage_paths/",
+            json={'name': name, 'path': f"{directory}/{{created_year}}/{{title}}", 'matching_algorithm': 0},
+            headers={'Content-Type': 'application/json'}
+        )
+        
+        if response.status_code in [200, 201]:
+            storage_path_id = response.json()['id']
+            logging.info(f"Created new storage path '{name}' with ID {storage_path_id}")
+            return storage_path_id
+        
+        logging.warning(f"Failed to create storage path '{name}': {response.status_code}, Response: {response.text}")
+        return None
     
     def _get_correspondent_id(self, sender_name):
         """
@@ -416,6 +461,11 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
             if self.tag_ids:
                 document_metadata['tags'] = self.tag_ids
                 logging.info(f"Adding tags to document: {self.tag_ids}")
+            
+            # Add storage path if available
+            if self.storage_path_id is not None:
+                document_metadata['storage_path'] = self.storage_path_id
+                logging.info(f"Using storage path for document: {self.storage_path_id}")
             
             # Check if this is a dry run
             if self.dry_run:
