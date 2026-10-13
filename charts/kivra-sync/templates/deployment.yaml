@@ -90,12 +90,12 @@ spec:
                 secretKeyRef:
                   name: {{ include "kivra-sync.secretName" . }}
                   key: ssn
-            {{- if eq .Values.storage.provider "paperless" }}
+            {{- if include "kivra-sync.usesPaperless" . }}
             - name: PAPERLESS_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "kivra-sync.secretName" . }}
-                  key: paperless-token
+                  name: {{ include "kivra-sync.paperlessTokenSecretName" . }}
+                  key: {{ include "kivra-sync.paperlessTokenSecretKey" . | quote }}
             {{- end }}
             {{- if include "kivra-sync.usesNtfyPassword" . }}
             - name: NTFY_PASSWORD

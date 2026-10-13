@@ -13,7 +13,8 @@ ssn: ""
 
 # Name of an existing Secret to read the sensitive values from instead of the
 # ones in this file. Expected keys: "ssn", plus "paperless-token" when using the
-# paperless storage provider and "ntfy-password" when interaction.ntfy.user is set.
+# paperless storage provider (unless storage.paperless.existingSecret is set) and
+# "ntfy-password" when interaction.ntfy.user is set.
 existingSecret: ""
 
 interaction:
@@ -37,7 +38,13 @@ storage:
   paperless:
     # e.g. http://paperless.paperless.svc:8000/api
     url: ""
+    # API token. Required unless existingSecret or paperless.existingSecret is set.
     token: ""
+    # Name of an existing Secret to read the API token from, e.g. one shared with
+    # paperless itself. Takes precedence over token and the top-level existingSecret.
+    existingSecret: ""
+    # Key in paperless.existingSecret that holds the token
+    existingSecretKey: paperless-token
     # Comma-separated list of tags to apply to all documents
     tags: ""
 

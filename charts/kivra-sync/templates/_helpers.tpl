@@ -52,6 +52,27 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if eq .Values.storage.provider "filesystem" }}true{{ end }}
 {{- end }}
 
+{{- define "kivra-sync.usesPaperless" -}}
+{{- if eq .Values.storage.provider "paperless" }}true{{ end }}
+{{- end }}
+
+{{/* The chart's own Secret holds the paperless token unless it is read from another Secret */}}
+{{- define "kivra-sync.managesPaperlessToken" -}}
+{{- if and (include "kivra-sync.usesPaperless" .) (not .Values.existingSecret) (not .Values.storage.paperless.existingSecret) }}true{{ end }}
+{{- end }}
+
+{{- define "kivra-sync.paperlessTokenSecretName" -}}
+{{- default (include "kivra-sync.secretName" .) .Values.storage.paperless.existingSecret }}
+{{- end }}
+
+{{- define "kivra-sync.paperlessTokenSecretKey" -}}
+{{- if .Values.storage.paperless.existingSecret }}
+{{- required "storage.paperless.existingSecretKey is required with storage.paperless.existingSecret" .Values.storage.paperless.existingSecretKey }}
+{{- else }}
+{{- print "paperless-token" }}
+{{- end }}
+{{- end }}
+
 {{- define "kivra-sync.usesNtfyPassword" -}}
 {{- if and (eq .Values.interaction.provider "ntfy") .Values.interaction.ntfy.user }}true{{ end }}
 {{- end }}
@@ -67,9 +88,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if not .Values.ssn }}
 {{- fail "ssn (or existingSecret) is required" }}
 {{- end }}
-{{- if and (eq .Values.storage.provider "paperless") (not .Values.storage.paperless.token) }}
-{{- fail "storage.paperless.token (or existingSecret) is required with the paperless storage provider" }}
 {{- end }}
+{{- if and (include "kivra-sync.managesPaperlessToken" .) (not .Values.storage.paperless.token) }}
+{{- fail "storage.paperless.token (or storage.paperless.existingSecret or existingSecret) is required with the paperless storage provider" }}
 {{- end }}
 {{- if and (eq .Values.storage.provider "paperless") (not .Values.storage.paperless.url) }}
 {{- fail "storage.paperless.url is required with the paperless storage provider" }}
