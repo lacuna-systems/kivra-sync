@@ -39,6 +39,7 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
         
         # Get storage path ID if a storage path is provided
         self.storage_path_id = self._get_storage_path_id(storage_path) if storage_path else None
+        logging.info(f"Paperless provider configured with storage path '{storage_path}' (ID {self.storage_path_id})")
     
     def _get_tag_ids(self, tag_names):
         """
@@ -99,36 +100,76 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
         Returns:
             int: Storage path ID, or None if it could not be found or created
         """
-        logging.info(f"Looking for storage path: {name}")
-        
-        # Check if storage path exists - use case-insensitive exact match
-        response = self.session.get(
-            f"{self.api_url}/storage_paths/",
-            params={'name__iexact': name}
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            if data['count'] > 0:
-                storage_path_id = data['results'][0]['id']
-                logging.info(f"Found existing storage path '{name}' with ID {storage_path_id}")
+        logging.info(f"Looking for storage path: '{name}'")
+
+        try:
+            # Check if storage path exists - use case-insensitive exact match
+            response = self.session.get(
+                f"{self.api_url}/storage_paths/",
+                params={'name__iexact': name}
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                logging.info(f"Storage path lookup for '{name}' returned {data.get('count')} result(s): "
+                             f"{[(sp.get('id'), sp.get('name'), sp.get('path')) for sp in data.get('results', [])]}")
+                # Verify the name ourselves in case the server ignores the filter and returns every storage path
+                for storage_path in data.get('results', []):
+                    if (storage_path.get('name') or '').lower() == name.lower():
+                        logging.info(f"Found existing storage path '{storage_path['name']}' with ID {storage_path['id']} "
+                                     f"(path template: '{storage_path.get('path')}')")
+                        return storage_path['id']
+            else:
+                logging.warning(f"Failed to look up storage path '{name}': {response.status_code}, Response: {response.text}")
+
+            # Create new storage path if not found, filing documents in a directory named after it
+            directory = name.replace('/', '-').replace('{', '').replace('}', '').strip()
+            logging.info(f"Creating new storage path '{name}' with path template '{directory}'")
+            response = self.session.post(
+                f"{self.api_url}/storage_paths/",
+                json={'name': name, 'path': directory, 'matching_algorithm': 0},
+                headers={'Content-Type': 'application/json'}
+            )
+
+            if response.status_code in [200, 201]:
+                storage_path_id = response.json()['id']
+                logging.info(f"Created new storage path '{name}' with ID {storage_path_id}")
                 return storage_path_id
-        
-        # Create new storage path if not found, filing documents in a directory named after it
-        directory = name.replace('/', '-').replace('{', '').replace('}', '').strip()
-        response = self.session.post(
-            f"{self.api_url}/storage_paths/",
-            json={'name': name, 'path': directory, 'matching_algorithm': 0},
+
+            logging.error(f"Failed to create storage path '{name}': {response.status_code}, Response: {response.text}")
+        except Exception as e:
+            logging.error(f"Error getting storage path '{name}': {str(e)}")
+
+        logging.error(f"No storage path for '{name}', documents will be stored in the Default storage path")
+        return None
+
+    def _assign_storage_path(self, document):
+        """
+        Assign the configured storage path to an already uploaded document if it differs.
+
+        Args:
+            document (dict): Document as returned by the paperless-ngx documents API
+        """
+        current = document.get('storage_path')
+        if current == self.storage_path_id:
+            logging.info(f"Document {document['id']} already has storage path {self.storage_path_id}")
+            return
+
+        if self.dry_run:
+            logging.info(f"DRY RUN: Would change storage path of document {document['id']} from {current} to {self.storage_path_id}")
+            return
+
+        logging.info(f"Changing storage path of document {document['id']} from {current} to {self.storage_path_id}")
+        response = self.session.patch(
+            f"{self.api_url}/documents/{document['id']}/",
+            json={'storage_path': self.storage_path_id},
             headers={'Content-Type': 'application/json'}
         )
-        
-        if response.status_code in [200, 201]:
-            storage_path_id = response.json()['id']
-            logging.info(f"Created new storage path '{name}' with ID {storage_path_id}")
-            return storage_path_id
-        
-        logging.warning(f"Failed to create storage path '{name}': {response.status_code}, Response: {response.text}")
-        return None
+
+        if response.status_code == 200:
+            logging.info(f"Updated storage path of document {document['id']} to {response.json().get('storage_path')}")
+        else:
+            logging.error(f"Failed to update storage path of document {document['id']}: {response.status_code}, Response: {response.text}")
     
     def _get_correspondent_id(self, sender_name):
         """
@@ -332,7 +373,13 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
             exists = data['count'] > 0
             
             if exists:
-                logging.info(f"Document with key {doc_key} already exists in Paperless (by filename)")
+                logging.info(f"Document with key {doc_key} already exists in Paperless (by filename): "
+                             f"{[(d.get('id'), d.get('storage_path')) for d in data.get('results', [])]}")
+                # Documents uploaded before the storage path was configured are skipped,
+                # so move them to the storage path here instead
+                if self.storage_path_id is not None:
+                    for document in data.get('results', []):
+                        self._assign_storage_path(document)
             else:
                 logging.info(f"Document with key {doc_key} does not exist in Paperless (by filename)")
                 
@@ -466,7 +513,11 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
             if self.storage_path_id is not None:
                 document_metadata['storage_path'] = self.storage_path_id
                 logging.info(f"Using storage path for document: {self.storage_path_id}")
-            
+            else:
+                logging.info("No storage path configured for document, Paperless will use the Default storage path")
+
+            logging.info(f"Uploading document with metadata: {document_metadata}")
+
             # Check if this is a dry run
             if self.dry_run:
                 logging.info(f"DRY RUN: Would upload document to paperless-ngx: {filename}")
@@ -484,7 +535,9 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
                 logging.error(f"Response: {response.text}")
                 return False
             
-            logging.info(f"Successfully uploaded document to paperless-ngx: {filename}")
+            # The response is the consumption task ID; check it under Tasks in paperless-ngx if the
+            # document ends up with unexpected metadata
+            logging.info(f"Successfully uploaded document to paperless-ngx: {filename} (task: {response.text})")
             
             # Document was uploaded successfully
             

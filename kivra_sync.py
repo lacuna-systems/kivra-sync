@@ -304,6 +304,8 @@ def main():
             storage_path = None
             if business_inbox is not None:
                 storage_path = business_inbox.get('name') or business_inbox['key']
+                logging.info(f"Using Paperless storage path '{storage_path}' for business account "
+                             f"(name: {business_inbox.get('name')!r}, key: {business_inbox.get('key')!r})")
             return PaperlessNgxStoreProvider(
                 api_url=args.paperless_url,
                 api_token=args.paperless_token,
