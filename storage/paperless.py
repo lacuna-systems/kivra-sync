@@ -118,7 +118,7 @@ class PaperlessNgxStoreProvider(DocumentStoreProvider):
         directory = name.replace('/', '-').replace('{', '').replace('}', '').strip()
         response = self.session.post(
             f"{self.api_url}/storage_paths/",
-            json={'name': name, 'path': f"{directory}/{{created_year}}/{{title}}", 'matching_algorithm': 0},
+            json={'name': name, 'path': directory, 'matching_algorithm': 0},
             headers={'Content-Type': 'application/json'}
         )
         
