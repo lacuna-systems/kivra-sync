@@ -48,11 +48,10 @@ docker run -p 8080:8080 -v ./data:/data ghcr.io/lacuna-systems/kivra-sync:latest
 The Helm chart is published as an OCI artifact to the GitHub Container Registry:
 
 ```bash
-helm install kivra-sync oci://ghcr.io/lacuna-systems/charts/kivra-sync \
-  --set-string ssn=YYYYMMDDXXXX
+helm install kivra-sync oci://ghcr.io/lacuna-systems/charts/kivra-sync
 ```
 
-By default this runs the `web` interaction provider and stores documents on a persistent volume. Use `kubectl port-forward svc/kivra-sync 8080` or enable the ingress (`ingress.enabled=true`) to reach the web interface. The web interface has no authentication, so do not expose it publicly.
+By default this runs the `web` interaction provider and stores documents on a persistent volume. With the `web` provider `ssn` is optional: leave it out and the web interface asks for the personal identity number at the start of each sync, so it is never stored in the cluster (with `existingSecret`, set `existingSecretHasSsn=false`). The `ntfy` provider still requires it. Use `kubectl port-forward svc/kivra-sync 8080` or enable the ingress (`ingress.enabled=true`) to reach the web interface. The web interface has no authentication, so do not expose it publicly.
 
 Example values for ntfy and Paperless-ngx:
 

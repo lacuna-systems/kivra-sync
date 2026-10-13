@@ -44,6 +44,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
+{{/* Whether the personal identity number is passed to the container */}}
+{{- define "kivra-sync.hasSsn" -}}
+{{- if .Values.existingSecret }}
+{{- if .Values.existingSecretHasSsn }}true{{ end }}
+{{- else if .Values.ssn }}true{{ end }}
+{{- end }}
+
 {{- define "kivra-sync.isWeb" -}}
 {{- if eq .Values.interaction.provider "web" }}true{{ end }}
 {{- end }}
@@ -63,10 +70,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if not (has .Values.storage.provider (list "filesystem" "paperless")) }}
 {{- fail "storage.provider must be one of: filesystem, paperless" }}
 {{- end }}
-{{- if not .Values.existingSecret }}
-{{- if not .Values.ssn }}
-{{- fail "ssn (or existingSecret) is required" }}
+{{- if and (eq .Values.interaction.provider "ntfy") (not (include "kivra-sync.hasSsn" .)) }}
+{{- fail "ssn (or existingSecret with an ssn key) is required with the ntfy interaction provider" }}
 {{- end }}
+{{- if not .Values.existingSecret }}
 {{- if and (eq .Values.storage.provider "paperless") (not .Values.storage.paperless.token) }}
 {{- fail "storage.paperless.token (or existingSecret) is required with the paperless storage provider" }}
 {{- end }}
