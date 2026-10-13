@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/lacuna-systems/kivra-sync/compare/v1.5.0...v1.6.0) (2026-10-13)
+
+
+### Features
+
+* Use a Paperless storage path for business documents instead of a tag ([#6](https://github.com/lacuna-systems/kivra-sync/issues/6)) ([4942471](https://github.com/lacuna-systems/kivra-sync/commit/494247193a6d2586679e5f0350aef9a7e8b7ccfd))
+
 # [1.5.0](https://github.com/lacuna-systems/kivra-sync/compare/v1.4.0...v1.5.0) (2026-10-13)
 
 
