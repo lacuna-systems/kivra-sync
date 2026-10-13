@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/lacuna-systems/kivra-sync/compare/v1.1.1...v1.2.0) (2026-10-13)
+
+
+### Bug Fixes
+
+* Refresh animated BankID QR on each poll (fixes RFA17 'QR code is invalid') ([#4](https://github.com/lacuna-systems/kivra-sync/issues/4)) ([57513c3](https://github.com/lacuna-systems/kivra-sync/commit/57513c369509e00ab520a11d86603871afa1db46))
+
+
+### Features
+
+* add Helm chart and publish image and chart to GHCR ([#1](https://github.com/lacuna-systems/kivra-sync/issues/1)) ([801309a](https://github.com/lacuna-systems/kivra-sync/commit/801309a9a5f9390aba66ebdc6306e91ba1955df1))
+
 ## [1.1.1](https://github.com/felixandersen/kivra-sync/compare/v1.1.0...v1.1.1) (2025-10-27)
 
 
