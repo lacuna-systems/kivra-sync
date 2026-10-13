@@ -300,14 +300,15 @@ def main():
         tags = args.paperless_tags.split(',') if args.paperless_tags else []
         
         def create_document_store(ssn, business_inbox):
-            account_tags = list(tags)
-            # Tag business account documents with the account name
+            # Store business account documents in a storage path named after the company
+            storage_path = None
             if business_inbox is not None:
-                account_tags.append(business_inbox.get('name') or business_inbox['key'])
+                storage_path = business_inbox.get('name') or business_inbox['key']
             return PaperlessNgxStoreProvider(
                 api_url=args.paperless_url,
                 api_token=args.paperless_token,
-                tags=account_tags or None,
+                tags=tags or None,
+                storage_path=storage_path,
                 dry_run=args.dry_run
             )
     
