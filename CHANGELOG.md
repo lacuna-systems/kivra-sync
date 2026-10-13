@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/lacuna-systems/kivra-sync/compare/v1.3.0...v1.4.0) (2026-10-13)
+
+
+### Features
+
+* Make the ssn optional in the Helm chart with the web provider ([#5](https://github.com/lacuna-systems/kivra-sync/issues/5)) ([7549eb8](https://github.com/lacuna-systems/kivra-sync/commit/7549eb81696ea269fe134da1ff466bbb5ff5337b))
+
 # [1.3.0](https://github.com/lacuna-systems/kivra-sync/compare/v1.2.0...v1.3.0) (2026-10-13)
 
 
