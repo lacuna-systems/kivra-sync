@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/lacuna-systems/kivra-sync/compare/v1.2.0...v1.3.0) (2026-10-13)
+
+
+### Features
+
+* Offer to open BankID on this device in the web UI on mobile ([#4](https://github.com/lacuna-systems/kivra-sync/issues/4)) ([75998a9](https://github.com/lacuna-systems/kivra-sync/commit/75998a90e63b55231265fcf58a236245ca74a9c6))
+
 # [1.2.0](https://github.com/lacuna-systems/kivra-sync/compare/v1.1.1...v1.2.0) (2026-10-13)
 
 
